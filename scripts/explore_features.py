@@ -84,3 +84,65 @@ print(f"  75th pct: {p75:.4f}")
 print(f"  95th pct: {p95:.4f}")
 print(f"  min:    {x1.min():.4f}")
 print(f"  max:    {x1.max():.4f}")
+
+# ---------------------------------------------------------------------------
+# x2 distribution plot
+# ---------------------------------------------------------------------------
+
+x2 = df["x2"]
+x2_mean = x2.mean()
+x2_median = x2.median()
+x2_p5, x2_p25, x2_p75, x2_p95 = x2.quantile([0.05, 0.25, 0.75, 0.95])
+
+fig, ax = plt.subplots(figsize=(8, 5))
+
+ax.hist(x2, bins=80, density=True, alpha=0.7, label="observed")
+
+xs2 = np.linspace(0, x2.max() * 1.05, 500)
+ax.plot(xs2, stats.gamma(3, scale=2).pdf(xs2), color="red", lw=2,
+        label="Gamma(3, 2) PDF")
+
+ax.axvline(x2_mean, color="navy", lw=1.5, linestyle="--",
+           label=f"mean = {x2_mean:.3f}")
+ax.axvline(x2_median, color="green", lw=1.5, linestyle=":",
+           label=f"median = {x2_median:.3f}")
+
+ax.axvspan(x2_p5, x2_p95, color="lightblue", alpha=0.15, label="5th–95th pct")
+
+ax.set_xlabel("x2 (unbounded positive measure)")
+ax.set_ylabel("density")
+ax.set_title("x2 ~ Gamma(3, 2)")
+
+ax.text(
+    0.98, 0.97,
+    "support: (0, ∞)  |  mean ≈ 6.0  |  mode ≈ 4.0",
+    transform=ax.transAxes,
+    ha="right", va="top",
+    fontsize=8,
+    bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.7),
+)
+
+ax.legend(fontsize=8)
+fig.tight_layout()
+
+out_path_x2 = OUT / "x2_distribution.png"
+fig.savefig(out_path_x2, dpi=150, bbox_inches="tight")
+plt.close(fig)
+
+assert out_path_x2.exists(), "x2_distribution.png was not saved"
+print(f"\nSaved → {out_path_x2}")
+
+# ---------------------------------------------------------------------------
+# x2 summary statistics
+# ---------------------------------------------------------------------------
+
+print("\nx2 summary statistics:")
+print(f"  mean:   {x2_mean:.4f}")
+print(f"  median: {x2_median:.4f}")
+print(f"  std:    {x2.std():.4f}")
+print(f"  5th pct:  {x2_p5:.4f}")
+print(f"  25th pct: {x2_p25:.4f}")
+print(f"  75th pct: {x2_p75:.4f}")
+print(f"  95th pct: {x2_p95:.4f}")
+print(f"  min:    {x2.min():.4f}")
+print(f"  max:    {x2.max():.4f}")
