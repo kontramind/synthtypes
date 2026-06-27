@@ -169,36 +169,51 @@ def noise_floor_plot(df) -> None:
     expected_x5 = df["x3"] * df["x1"] + (1 - df["x3"]) * df["x2"]
     r5 = (df["x5"] - expected_x5).abs()
 
+    # x7 has three sigma levels; show combined residuals with a threshold line per level
     r7 = (df["x7"] - (df["x6"] + 1) * df["x1"]).abs()
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    # (sigma, residuals, title, [(threshold_label, value, color), ...])
+    _sigma_x7 = [0.05, 0.08, 0.12]
     specs = [
-        (r4, 0.05, "x4", axes[0]),
-        (r5, 0.08, "x5", axes[1]),
-        (r7, None,  "x7", axes[2]),   # x7 has mixed sigmas; use empirical std
+        (0.05, r4, "|x4 − (x1+x2)|",
+         [("3σ", 3 * 0.05, "orange"), ("6σ", 6 * 0.05, "red")]),
+        (0.08, r5, "|x5 − E[x5|x3]|",
+         [("3σ", 3 * 0.08, "orange"), ("6σ", 6 * 0.08, "red")]),
+        (max(_sigma_x7), r7, "|x7 − (x6+1)·x1|  (all severities)",
+         [(f"3σ(k={k})", 3 * s, c) for k, s, c in zip(
+             [0, 1, 2], _sigma_x7, ["#f4a340", "#e07b00", "#b85c00"]
+         )] + [
+             (f"6σ(k={k})", 6 * s, c) for k, s, c in zip(
+                 [0, 1, 2], _sigma_x7, ["#d44", "#a00", "#600"]
+             )
+         ]),
     ]
 
-    for residuals, sigma, label, ax in specs:
-        ax.hist(residuals, bins=100, density=True, alpha=0.7)
-        if sigma is not None:
-            t3 = 3 * sigma
-            t6 = 6 * sigma
-        else:
-            # DESIGN DECISION NEEDED: x7 has three sigma levels; use overall empirical std
-            sigma_emp = residuals.std()
-            t3 = 3 * sigma_emp
-            t6 = 6 * sigma_emp
-        ax.axvline(t3, color="orange", lw=1.5, linestyle="--",
-                   label=f"3σ = {t3:.3f}")
-        ax.axvline(t6, color="red", lw=1.5, linestyle="--",
-                   label=f"6σ = {t6:.3f}")
-        ax.set_title(f"|{label} residual|")
+    # constrained_layout handles suptitle without needing tight_layout()
+    fig, axes = plt.subplots(1, 3, figsize=(16, 5), constrained_layout=True)
+
+    for (sigma, residuals, title, thresholds), ax in zip(specs, axes):
+        xlim_max = 8 * sigma
+        ax.hist(
+            residuals.clip(upper=xlim_max),
+            bins=100,
+            range=(0, xlim_max),
+            density=True,
+            alpha=0.7,
+        )
+        for tlabel, tval, tcolor in thresholds:
+            ax.axvline(tval, color=tcolor, lw=1.5, linestyle="--",
+                       label=f"{tlabel} = {tval:.4f}")
+        ax.set_xlim(0, xlim_max)
+        ax.set_title(title, fontsize=9)
         ax.set_xlabel("absolute residual")
-        ax.legend(fontsize=8)
+        ax.legend(fontsize=7)
 
     fig.suptitle("Noise floor — candidate epsilon thresholds", fontsize=13)
-    fig.tight_layout()
     _save(fig, "noise_floor")
+
+    out_path = Path("outputs/verification/noise_floor.png")
+    assert out_path.exists(), "noise_floor.png was not saved"
 
 
 # ---------------------------------------------------------------------------
