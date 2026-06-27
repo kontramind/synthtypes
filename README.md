@@ -25,3 +25,32 @@ or x1 ≥ 1 is a **Type III hallucination** (support violation)
 detectable without any population reference.
 
 ![x1 distribution](outputs/exploration/x1_distribution.png)
+
+#### x2 — unbounded positive continuous measure
+
+```
+x2 ~ Gamma(shape=3, scale=2)
+support: (0, ∞)
+mean:    6.0
+mode:    4.0
+```
+
+x2 represents a raw lab measurement — something like serum creatinine
+or NT-proBNP. Values are strictly positive with no upper hard boundary,
+right-skewed, with most patients in a moderate range and a long tail
+toward high values.
+
+The strict positivity is essential: any synthetic record with x2 ≤ 0
+is a **Type III hallucination** (support violation) detectable without
+any population reference.
+
+x2 is independent of x1 in Tier 1. In Tier 2 both feed into x4 and x5,
+where the switch variable x3 determines which of them x5 follows. A
+generator that fails to route x1 and x2 correctly through x3 produces
+**Type II hallucinations**.
+
+Note: x1 and x2 live on very different scales (mean 0.286 vs 6.0).
+Features must be scaled to a common range before computing distances
+for privacy-risky detection.
+
+![x2 distribution](outputs/exploration/x2_distribution.png)
