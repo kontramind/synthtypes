@@ -54,3 +54,40 @@ Features must be scaled to a common range before computing distances
 for privacy-risky detection.
 
 ![x2 distribution](outputs/exploration/x2_distribution.png)
+
+#### x3 — binary routing switch
+
+```
+x3 ~ Bernoulli(p=0.3)
+support: {0, 1}
+mean:    0.3
+```
+
+x3 is a binary subgroup indicator — something like diabetic vs
+non-diabetic, elective vs emergency admission, or any clinically
+meaningful binary partition. 70% of patients are in state 0,
+30% in state 1.
+
+x3 is architecturally the most important Tier 1 feature because
+it acts as a routing switch for x5 in Tier 2:
+
+```
+x5 = x3·x1 + (1−x3)·x2 + noise
+```
+
+When x3=0: x5 tracks x2 (the lab measurement branch)
+When x3=1: x5 tracks x1 (the physiological index branch)
+
+A generator that ignores x3 or learns it imperfectly will mix
+the two branches, producing records where x5 follows the wrong
+signal. This is the primary source of **Type II hallucinations**
+in this dataset.
+
+**Note on Type III:** x3 is declared as a binary categorical
+feature. A well-behaved SDG that respects column types will never
+produce x3=0.4 — the type system enforces the support constraint
+before the generator runs. Type III hallucinations in this dataset
+are therefore concentrated in the continuous features (x1, x2,
+x4, x5, x7), where no schema enforcement applies.
+
+![x3 distribution](outputs/exploration/x3_distribution.png)
